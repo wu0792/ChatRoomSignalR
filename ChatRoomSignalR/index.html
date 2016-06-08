@@ -1,0 +1,79 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>hey, where r u?</title>
+    <script src="Scripts/jquery-1.6.4.min.js"></script>
+    <script src="Scripts/jquery.signalR-2.2.0.min.js"></script>
+    <script src="signalR/hubs"></script>
+    <script type="text/javascript">
+        $(function () {
+            var chat = $.connection.chat;
+
+            chat.client.refreshUsers = function (users) {
+                $('#users').empty().append($('<option value="">all</option>'));
+
+                var userList = JSON.parse(users);
+                $.each(userList, function (i, n) {
+                    if (n.name != $('#name').val()) {
+                        $('#users').append($('<option></option>').attr('value', n.id).html(n.name));
+                    }
+                });
+            };
+
+            chat.client.regFailure = function (msg) {
+                $('#name,#connect').removeAttr('disabled');
+                alert(msg);
+            };
+
+            chat.client.regSuccess = function () {
+                $('#name,#connect').attr('disabled', 'disabled');
+                $('#chatArea input,textarea,select').removeAttr('disabled');
+            };
+
+            chat.client.send = function (message) {
+                $('#message').append('<li>' + message + '</li>');
+            };
+
+            $.connection.hub.start().done(function () {
+                $('#chatArea input,textarea,select').attr('disabled', 'disabled');
+                $('#connect').click(function () {
+                    var name = $('#name').val();
+                    if (name == "") {
+                        alert("please enter ur name.");
+                        return;
+                    }
+
+                    chat.server.reg(name);
+                });
+
+                $('#send').click(function () {
+                    chat.server.send($("#users option:selected").attr('value'), $('#msg').val());
+                    $('#msg').val('');
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <fieldset>
+        <legend>your name here:</legend>
+        <input id="name" type="text" placeholder="enter ur name." />
+        <input type="button" id="connect" value="connect" />
+    </fieldset>
+
+    <fieldset id="chatArea">
+        <legend>chat here:</legend>
+        <div>
+            <label>speak to:</label>
+            <select id="users" style="width:80px;">
+                <option value="">all</option>
+            </select>
+        </div>
+
+        <textarea rows="5" style="width:400px;" id="msg"></textarea>
+        <input type="button" id="send" value="send" disabled="disabled" />
+        <ul id="message"></ul>
+    </fieldset>
+</body>
+</html>
